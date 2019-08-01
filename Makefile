@@ -24,9 +24,10 @@ UT_OBJS = $(subst $(SRC)/,$(OBJ)/,$(subst .cpp,.o,$(UT_SRCS)))
 
 ifeq ($(RELEASE),true)
 	CPPFLAGS = -O3 -DNDEBUG -Wall -Wextra -pthread -std=c++17 -stdlib=libstdc++
-	LDFLAGS = -Wl,-s
+	LDFLAGS = -Wl,-s -lcurl
 else
 	CPPFLAGS = -O0 -g -Wall -Wextra -pthread -std=c++17 -stdlib=libstdc++
+	LDFLAGS = -lcurl
 endif
 
 all: $(BIN)/$(TARGET)
