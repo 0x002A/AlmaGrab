@@ -28,12 +28,12 @@
 
 #include <iostream>
 
-#include "Init.h"
+#include "Application.h"
 
 auto
 main(int argc, char* argv[]) -> int
 {
-  std::cout << only_true_answer << std::endl;
+  AlmaGrab::Application app(argc, argv);
 
   return 0;
 }

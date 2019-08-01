@@ -26,14 +26,57 @@
    OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  **********************************************************************************************************************/
 
-#include "gtest/gtest.h"
+#include "Application.h"
 
-#include "Init.h"
+#include <regex>
 
-namespace {
-
-TEST(Init, Init) {
-  EXPECT_EQ(only_true_answer, 42);
+AlmaGrab::Application::Application(int argc, char* argv[])
+{
+  if(argc > 1) {
+    m_args = parseArguments(argc, argv);
+  }
 }
 
-}  // namespace
+std::map<std::string, std::string>
+AlmaGrab::Application::parseArguments(int argc, char* argv[])
+{
+  std::map<std::string, std::string> argsMap;
+
+  // The value of argc will never be below zero, but we need to shut up the compiler because it's an int
+  for(size_t i = 0; i < (size_t)argc; ++i) {
+    // The first arg is the name of the executable -> drop it
+    if(i == 0) {
+      continue;
+    }
+
+    std::regex rgx("-([A-Za-z0-9]*)=([A-Za-z0-9]*)");
+    std::smatch matches;
+    std::string arg(argv[i]);
+
+    if(std::regex_search(arg, matches, rgx)) {
+      argsMap.insert(std::pair<std::string, std::string>(matches[1].str(), matches[2].str()));
+    } else {
+      throw std::runtime_error("Illegal parameter format");
+    }
+  }
+
+  return argsMap;
+}
+
+std::string
+AlmaGrab::Application::requireParam(std::string name)
+{
+  if(hasParam(name)) {
+    return m_args[name];
+  } else {
+    throw std::runtime_error("Missing required parameter: " + name);
+  }
+}
+
+void
+AlmaGrab::Application::getParam(std::string name, std::string& refValue)
+{
+  if(hasParam(name)) {
+    refValue = m_args[name];
+  }
+}
