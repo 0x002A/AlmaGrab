@@ -34,14 +34,20 @@ namespace {
 
 // Tests wether requesting an illegal typecast leads to an exception
 TEST(ResourceTest, ThrowsException) {
-  AlmaGrab::Resource res(new std::string(), [](const AlmaGrab::Resource*) -> void {  });
+  AlmaGrab::Resource res(new std::string(), [](const AlmaGrab::Resource* pVal) -> void {
+    auto pStr = (std::string*)*pVal;
+    delete pStr;
+  });
 
   ASSERT_THROW(res.operator int*(), std::runtime_error);
 }
 
 // Tests wether requesting a valid typecast leads to an exception
 TEST(ResourceTest, ThrowsNoException) {
-  AlmaGrab::Resource res(new std::string(), [](const AlmaGrab::Resource*) -> void {  });
+  AlmaGrab::Resource res(new std::string(), [](const AlmaGrab::Resource* pVal) -> void {
+    auto pStr = (std::string*)*pVal;
+    delete pStr;
+  });
 
   ASSERT_NO_THROW(res.operator std::string*());
 }
