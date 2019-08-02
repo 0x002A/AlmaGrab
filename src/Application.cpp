@@ -37,10 +37,19 @@ AlmaGrab::Application::Application(int argc, char* argv[])
   }
 }
 
-std::map<std::string, std::string>
+AlmaGrab::Application::~Application()
+{
+  // The map containing all managed resources act's like a LIFO stack
+  // we have to iterate using reverse order an call all associated deallocator functions
+  for(auto it = m_resIdx.rbegin(); it != m_resIdx.rend(); ++it) {
+    m_resources.at(*it).callDeallocator();
+  }
+}
+
+std::unordered_map<std::string, std::string>
 AlmaGrab::Application::parseArguments(int argc, char* argv[])
 {
-  std::map<std::string, std::string> argsMap;
+  std::unordered_map<std::string, std::string> argsMap;
 
   // The value of argc will never be below zero, but we need to shut up the compiler because it's an int
   for(size_t i = 0; i < (size_t)argc; ++i) {
@@ -54,7 +63,7 @@ AlmaGrab::Application::parseArguments(int argc, char* argv[])
     std::string arg(argv[i]);
 
     if(std::regex_search(arg, matches, rgx)) {
-      argsMap.insert(std::pair<std::string, std::string>(matches[1].str(), matches[2].str()));
+      argsMap.insert(std::make_pair(matches[1].str(), matches[2].str()));
     } else {
       throw std::runtime_error("Illegal parameter format");
     }
@@ -64,19 +73,19 @@ AlmaGrab::Application::parseArguments(int argc, char* argv[])
 }
 
 std::string
-AlmaGrab::Application::requireParam(std::string name)
+AlmaGrab::Application::requireParam(std::string name) const
 {
   if(hasParam(name)) {
-    return m_args[name];
+    return m_args.at(name);
   } else {
     throw std::runtime_error("Missing required parameter: " + name);
   }
 }
 
 void
-AlmaGrab::Application::getParam(std::string name, std::string& refValue)
+AlmaGrab::Application::getParam(std::string name, std::string& refValue) const
 {
   if(hasParam(name)) {
-    refValue = m_args[name];
+    refValue = m_args.at(name);
   }
 }

@@ -97,5 +97,56 @@ TEST(ApplicationTest, ResultOfGetParam) {
   EXPECT_EQ(str, "0x002A");
 }
 
+// Tests wether adding a resource using a used key leads to an exception
+TEST(ApplicationTest, ThrowsForUsedResourceIdentifier) {
+  // Explicit cast required
+  char *args[] = {(char*)"almagrab\0"};
+  AlmaGrab::Application app(1, args);
+
+  AlmaGrab::Resource res(new std::string(), [](const AlmaGrab::Resource*) -> void {  });
+  app.manageResource("test", res);
+
+  ASSERT_THROW(app.manageResource("test", res), std::logic_error);
+}
+
+// Tests wether adding a resource using an unused key leads to an exception
+TEST(ApplicationTest, ThrowsNotForUnusedResourceIdentifier) {
+  // Explicit cast required
+  char *args[] = {(char*)"almagrab\0"};
+  AlmaGrab::Application app(1, args);
+
+  AlmaGrab::Resource res(new std::string(), [](const AlmaGrab::Resource*) -> void {  });
+
+  ASSERT_NO_THROW(app.manageResource("test", res));
+}
+
+// Tests wether the LIFO stack of managed resources calls the deallocator functions in correct order
+TEST(ApplicationTest, DeallocatorCallOrder) {
+  // We are going to test the deallocation order by a simple multiplication depending on the order of execution
+  int n = 42;
+
+  // Construct app instance in extra scope
+  {
+    // Explicit cast required
+    char *args[] = {(char*)"almagrab\0"};
+    AlmaGrab::Application app(1, args);
+
+    AlmaGrab::Resource res1(&n, [](const AlmaGrab::Resource* pRes) -> void {
+      auto pVal = (int*)*pRes;
+      *pVal *= 2;
+    });
+
+    AlmaGrab::Resource res2(&n, [](const AlmaGrab::Resource* pRes) -> void {
+      auto pVal = (int*)*pRes;
+      *pVal -= 2;
+    });
+
+    app.manageResource("res1", res1);
+    app.manageResource("res2", res2);
+  }
+
+  EXPECT_EQ(n, 80);
+}
+
 // End of namespace
 }

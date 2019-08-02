@@ -48,10 +48,36 @@ public:
    * @param deallocator the deallocation function.
    */
   template<typename T>
-  Resource(T* ptr, std::function<void()> deallocator)
+  Resource(T* ptr, std::function<void(const Resource*)> deallocator)
   : m_ptr(ptr)
-  , m_typeid(typeid(ptr))
+  , m_typeid(const_cast<std::type_info&>(typeid(ptr)))
   , m_deallocator(deallocator) {};
+  /**
+   * Class move constructor.
+   * @param other the instance to be moved.
+   */
+  Resource(Resource&& other)
+  : m_ptr(other.m_ptr)
+  , m_typeid(other.m_typeid)
+  , m_deallocator(std::move(other.m_deallocator))
+  {
+    other.m_ptr = nullptr;
+  };
+  /**
+   * Copy constructor.
+   * Explicitly deleted.
+   */
+  Resource(const Resource&) = delete;
+  /**
+   * Copy assignment operator.
+   * Explicitly deleted.
+   */
+  Resource& operator=(const Resource&) = delete;
+  /**
+   * Move assignment operator.
+   * Explicitly deleted.
+   */
+  Resource& operator=(Resource&&) = delete;
   /**
    * Converts the internal handle back to the original type. Throws an exception if requested type doesn't match the
    * original one.
@@ -67,14 +93,13 @@ public:
     return (T)m_ptr;
   }
   /**
-   * Returns the supplied deallocation function.
-   * @return the deallocation function.
+   * Calls the supplied deallocation function.
    */
-  inline std::function<void()> getDeallocator() const { return m_deallocator; };
+  inline void callDeallocator() const { m_deallocator(this); };
 protected:
-  const void* m_ptr; /*!< the resource handle */
-  const std::type_info& m_typeid; /*!< the original type information */
-  const std::function<void()> m_deallocator; /*!< the deallocation function */
+  void* m_ptr; /*!< the resource handle */
+  std::type_info& m_typeid; /*!< the original type information */
+  std::function<void(const Resource*)> m_deallocator; /*!< the deallocation function */
 };
 
 // End of namespace
