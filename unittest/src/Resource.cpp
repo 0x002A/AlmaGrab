@@ -26,23 +26,31 @@
    OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  **********************************************************************************************************************/
 
-#include "Application.h"
-#include "Telegram.h"
-#include "Common.h"
+#include "Resource.h"
 
-#include <curl/curl.h>
+#include <gtest/gtest.h>
 
-auto
-main(int argc, char* argv[]) -> int
-{
-  AlmaGrab::Application app(argc, argv);
+namespace {
 
-  AlmaGrab::Resource curl(curl_easy_init(), [](const AlmaGrab::Resource* pVal) -> void {
-    auto pCURL = (CURL*)*pVal;
-    curl_easy_cleanup(pCURL);
+// Tests wether requesting an illegal typecast leads to an exception
+TEST(ResourceTest, ThrowsException) {
+  AlmaGrab::Resource res(new std::string(), [](const AlmaGrab::Resource* pVal) -> void {
+    auto pStr = (std::string*)*pVal;
+    delete pStr;
   });
 
-  app.manageResource(AlmaGrab::RESOURCE_CURL, curl);
+  ASSERT_THROW(res.operator int*(), std::runtime_error);
+}
 
-  return 0;
+// Tests wether requesting a valid typecast leads to an exception
+TEST(ResourceTest, ThrowsNoException) {
+  AlmaGrab::Resource res(new std::string(), [](const AlmaGrab::Resource* pVal) -> void {
+    auto pStr = (std::string*)*pVal;
+    delete pStr;
+  });
+
+  ASSERT_NO_THROW(res.operator std::string*());
+}
+
+// End of namespace
 }

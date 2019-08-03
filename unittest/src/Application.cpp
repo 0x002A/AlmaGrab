@@ -26,16 +26,16 @@
    OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  **********************************************************************************************************************/
 
-#include "gtest/gtest.h"
-
 #include "Application.h"
+
+#include <gtest/gtest.h>
 
 namespace {
 
 // Tests wether passing an illegaly formed parameter leads to an exception
 TEST(ApplicationTest, ThrowsException) {
   // Explicit cast required
-  char *args[] = {(char*)"almagrab\0", (char*)"42\0"};
+  char *args[] = {(char*)"almagrab", (char*)"42"};
 
   ASSERT_THROW(AlmaGrab::Application(2, args), std::runtime_error);
 }
@@ -43,7 +43,7 @@ TEST(ApplicationTest, ThrowsException) {
 // Tests wether passing a well formed parameter leads to an exception
 TEST(ApplicationTest, ThrowsNoException) {
   // Explicit cast required
-  char *args[] = {(char*)"almagrab\0", (char*)"-username=0x002A\0"};
+  char *args[] = {(char*)"almagrab", (char*)"-username=0x002A"};
 
   ASSERT_NO_THROW(AlmaGrab::Application(2, args));
 }
@@ -51,7 +51,7 @@ TEST(ApplicationTest, ThrowsNoException) {
 // Tests wether requiring a missing parameter leads to an exception
 TEST(ApplicationTest, ThrowsForMissingRequired) {
   // Explicit cast required
-  char *args[] = {(char*)"almagrab\0", (char*)"-username=0x002A\0"};
+  char *args[] = {(char*)"almagrab", (char*)"-username=0x002A"};
   AlmaGrab::Application app(2, args);
 
   ASSERT_THROW(app.requireParam("password"), std::runtime_error);
@@ -60,7 +60,7 @@ TEST(ApplicationTest, ThrowsForMissingRequired) {
 // Tests wether requiring a given parameter leads to an exception
 TEST(ApplicationTest, ThrowsNotForGivenRequired) {
   // Explicit cast required
-  char *args[] = {(char*)"almagrab\0", (char*)"-username=0x002A\0"};
+  char *args[] = {(char*)"almagrab", (char*)"-username=0x002A"};
   AlmaGrab::Application app(2, args);
 
   ASSERT_NO_THROW(app.requireParam("username"));
@@ -69,7 +69,7 @@ TEST(ApplicationTest, ThrowsNotForGivenRequired) {
 // Tests wether hasParam returns correct results
 TEST(ApplicationTest, ResultOfHasParam) {
   // Explicit cast required
-  char *args[] = {(char*)"almagrab\0", (char*)"-username=0x002A\0"};
+  char *args[] = {(char*)"almagrab", (char*)"-username=0x002A"};
   AlmaGrab::Application app(2, args);
 
   EXPECT_EQ(app.hasParam("username"), true);
@@ -79,7 +79,7 @@ TEST(ApplicationTest, ResultOfHasParam) {
 // Tests wether requireParam returns correct a result
 TEST(ApplicationTest, ResultOfRequireParam) {
   // Explicit cast required
-  char *args[] = {(char*)"almagrab\0", (char*)"-username=0x002A\0"};
+  char *args[] = {(char*)"almagrab", (char*)"-username=0x002A"};
   AlmaGrab::Application app(2, args);
 
   EXPECT_EQ(app.requireParam("username"), "0x002A");
@@ -88,13 +88,64 @@ TEST(ApplicationTest, ResultOfRequireParam) {
 // Tests wether requireParam returns correct a result
 TEST(ApplicationTest, ResultOfGetParam) {
   // Explicit cast required
-  char *args[] = {(char*)"almagrab\0", (char*)"-username=0x002A\0"};
+  char *args[] = {(char*)"almagrab", (char*)"-username=0x002A"};
   AlmaGrab::Application app(2, args);
   std::string str;
 
   app.getParam("username", str);
 
   EXPECT_EQ(str, "0x002A");
+}
+
+// Tests wether adding a resource using a used key leads to an exception
+TEST(ApplicationTest, ThrowsForUsedResourceIdentifier) {
+  // Explicit cast required
+  char *args[] = {(char*)"almagrab"};
+  AlmaGrab::Application app(1, args);
+
+  AlmaGrab::Resource res(new std::string(), [](const AlmaGrab::Resource*) -> void {  });
+  app.manageResource("test", res);
+
+  ASSERT_THROW(app.manageResource("test", res), std::logic_error);
+}
+
+// Tests wether adding a resource using an unused key leads to an exception
+TEST(ApplicationTest, ThrowsNotForUnusedResourceIdentifier) {
+  // Explicit cast required
+  char *args[] = {(char*)"almagrab"};
+  AlmaGrab::Application app(1, args);
+
+  AlmaGrab::Resource res(new std::string(), [](const AlmaGrab::Resource*) -> void {  });
+
+  ASSERT_NO_THROW(app.manageResource("test", res));
+}
+
+// Tests wether the LIFO stack of managed resources calls the deallocator functions in correct order
+TEST(ApplicationTest, DeallocatorCallOrder) {
+  // We are going to test the deallocation order by a simple multiplication depending on the order of execution
+  int n = 42;
+
+  // Construct app instance in extra scope
+  {
+    // Explicit cast required
+    char *args[] = {(char*)"almagrab"};
+    AlmaGrab::Application app(1, args);
+
+    AlmaGrab::Resource res1(&n, [](const AlmaGrab::Resource* pRes) -> void {
+      auto pVal = (int*)*pRes;
+      *pVal *= 2;
+    });
+
+    AlmaGrab::Resource res2(&n, [](const AlmaGrab::Resource* pRes) -> void {
+      auto pVal = (int*)*pRes;
+      *pVal -= 2;
+    });
+
+    app.manageResource("res1", res1);
+    app.manageResource("res2", res2);
+  }
+
+  EXPECT_EQ(n, 80);
 }
 
 // End of namespace

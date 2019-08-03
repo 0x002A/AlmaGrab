@@ -26,23 +26,42 @@
    OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  **********************************************************************************************************************/
 
-#include "Application.h"
-#include "Telegram.h"
-#include "Common.h"
+#ifndef NOTIFIABLE_H
+#define NOTIFIABLE_H
 
-#include <curl/curl.h>
+#include <string>
 
-auto
-main(int argc, char* argv[]) -> int
-{
-  AlmaGrab::Application app(argc, argv);
+//namespace
+namespace AlmaGrab {
 
-  AlmaGrab::Resource curl(curl_easy_init(), [](const AlmaGrab::Resource* pVal) -> void {
-    auto pCURL = (CURL*)*pVal;
-    curl_easy_cleanup(pCURL);
-  });
+// Forward declaration
+class Application;
 
-  app.manageResource(AlmaGrab::RESOURCE_CURL, curl);
+/**
+ *  Interface class implemented by notification targets.
+ *
+ *  This class act's as an interface for all recipients of notifications.
+ */
+class Notifiable {
+public:
+  /**
+   * Class constructor which recieves a pointer to the application class instance.
+   * @see AlmaGrab::Application
+   * @param pApp the pointer to the application class instance.
+   */
+  explicit Notifiable(const Application* pApp)
+  : m_pApp(pApp) {};
 
-  return 0;
+  /**
+   * Pure virtual notification method to be implemented by deriving classes.
+   * @param msg the message to be sent to the notification target.
+   */
+  virtual void notify(std::string msg) const = 0;
+protected:
+  const Application* m_pApp; /*!< a pointer to the application class instance */
+};
+
+// End of namespace
 }
+
+#endif /* NOTIFIABLE_H */

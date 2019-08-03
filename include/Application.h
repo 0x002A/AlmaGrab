@@ -29,7 +29,9 @@
 #ifndef APPLICATION_H
 #define APPLICATION_H
 
-#include <map>
+#include "Resource.h"
+
+#include <unordered_map>
 #include <string>
 
 //namespace
@@ -51,24 +53,48 @@ public:
    */
   Application(int argc, char* argv[]);
   /**
+   * Class detructor. Responsible for freeing all managed resources by calling their deallocator functions.
+   */
+  ~Application();
+  /**
    * Returns the parameter value if the parameter exists. Throws an exception otherwise.
    * @param name the name of the parameter.
    * @return the parameter value.
    */
-  std::string requireParam(std::string name);
+  std::string requireParam(std::string name) const;
   /**
    * Copies the parameter value to the received std::string reference if the parameter exists.
    * @param name the name of the parameter.
    * @param refValue the std::string reference receiving the copy of the parameter value.
    */
-  void getParam(std::string name, std::string& refValue);
+  void getParam(std::string name, std::string& refValue) const;
 
   /**
    * Checks wether the parameter exists or not.
    * @param name the name of the parameter.
    * @return bool representing wether the parameter exists or not.
    */
-  inline bool hasParam(std::string name) { return !(m_args.find(name) == m_args.end()); };
+  inline bool hasParam(std::string name) const { return m_args.find(name) != m_args.end(); };
+
+  /**
+   * Adds the supplied resource to the internal stack.
+   * @param identifier the identifier of the resource.
+   * @param res the resource.
+   */
+  inline void manageResource(std::string identifier, Resource& res) {
+    if(m_resources.find(identifier) != m_resources.end()) {
+      throw std::logic_error("Identifier already in use");
+    }
+
+    m_resources.insert(std::make_pair(identifier, std::move(res)));
+    m_resIdx.push_back(identifier);
+  };
+  /**
+   * Returns the requested resource.
+   * @param identifier the identifier of the resource.
+   * @return the requested resource.
+   */
+  inline const Resource& getResource(std::string identifier) const { return m_resources.at(identifier); };
 protected:
   /**
    * Parses the supplied arguments by using a regular expression. Skips the first argument which mostly contains the
@@ -77,9 +103,11 @@ protected:
    * @param argv the argument values.
    * @return a map containing the argument values assigned to their keys.
    */
-  std::map<std::string, std::string> parseArguments(int argc, char* argv[]);
+  std::unordered_map<std::string, std::string> parseArguments(int argc, char* argv[]);
 
-  std::map<std::string, std::string> m_args; /*!< a map containing the argument values assigned to their keys */
+  std::unordered_map<std::string, std::string> m_args; /*!< a map containing the arg values assigned to their keys */
+  std::vector<std::string> m_resIdx; /*!< a vector storing the insertion order of the managed resources */
+  std::unordered_map<std::string, Resource> m_resources; /*!< a map containing resources assigned to their keys */
 };
 
 // End of namespace

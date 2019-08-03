@@ -26,23 +26,83 @@
    OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  **********************************************************************************************************************/
 
-#include "Application.h"
-#include "Telegram.h"
-#include "Common.h"
+#ifndef RESOURCE_H
+#define RESOURCE_H
 
-#include <curl/curl.h>
+#include <functional>
 
-auto
-main(int argc, char* argv[]) -> int
-{
-  AlmaGrab::Application app(argc, argv);
+//namespace
+namespace AlmaGrab {
 
-  AlmaGrab::Resource curl(curl_easy_init(), [](const AlmaGrab::Resource* pVal) -> void {
-    auto pCURL = (CURL*)*pVal;
-    curl_easy_cleanup(pCURL);
-  });
+/**
+ *  Class functioning as a resource wrapper.
+ *
+ *  This class holds a pointer to a resource as well as it's deallocation function. It can be used to build a stack of
+ *  deallocation functions to be called at the end of some scope.
+ */
+class Resource {
+public:
+  /**
+   * Class constructor which creates a new instance.
+   * @param ptr the resource handle.
+   * @param deallocator the deallocation function.
+   */
+  template<typename T>
+  Resource(T* ptr, std::function<void(const Resource*)> deallocator)
+  : m_ptr(ptr)
+  , m_typeid(const_cast<std::type_info&>(typeid(ptr)))
+  , m_deallocator(deallocator) {};
+  /**
+   * Class move constructor.
+   * @param other the instance to be moved.
+   */
+  Resource(Resource&& other)
+  : m_ptr(other.m_ptr)
+  , m_typeid(other.m_typeid)
+  , m_deallocator(std::move(other.m_deallocator))
+  {
+    other.m_ptr = nullptr;
+  };
+  /**
+   * Copy constructor.
+   * Explicitly deleted.
+   */
+  Resource(const Resource&) = delete;
+  /**
+   * Copy assignment operator.
+   * Explicitly deleted.
+   */
+  Resource& operator=(const Resource&) = delete;
+  /**
+   * Move assignment operator.
+   * Explicitly deleted.
+   */
+  Resource& operator=(Resource&&) = delete;
+  /**
+   * Converts the internal handle back to the original type. Throws an exception if requested type doesn't match the
+   * original one.
+   * @return the casted resource pointer.
+   */
+  template<typename T>
+  inline operator T() const
+  {
+    if(typeid(T) != m_typeid) {
+      throw std::runtime_error("Invalid typecast");
+    }
 
-  app.manageResource(AlmaGrab::RESOURCE_CURL, curl);
+    return (T)m_ptr;
+  }
+  /**
+   * Calls the supplied deallocation function.
+   */
+  inline void callDeallocator() const { m_deallocator(this); };
+protected:
+  void* m_ptr; /*!< the resource handle */
+  std::type_info& m_typeid; /*!< the original type information */
+  std::function<void(const Resource*)> m_deallocator; /*!< the deallocation function */
+};
 
-  return 0;
+// End of namespace
 }
+
+#endif /* RESOURCE_H */

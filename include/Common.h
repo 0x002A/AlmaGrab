@@ -26,23 +26,17 @@
    OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  **********************************************************************************************************************/
 
-#include "Application.h"
-#include "Telegram.h"
-#include "Common.h"
+#ifndef COMMON_H
+#define COMMON_H
 
-#include <curl/curl.h>
+namespace AlmaGrab {
 
-auto
-main(int argc, char* argv[]) -> int
-{
-  AlmaGrab::Application app(argc, argv);
+constexpr char RESOURCE_CURL[] = "curl";
 
-  AlmaGrab::Resource curl(curl_easy_init(), [](const AlmaGrab::Resource* pVal) -> void {
-    auto pCURL = (CURL*)*pVal;
-    curl_easy_cleanup(pCURL);
-  });
+constexpr char PARAM_TGTOKEN[] = "tgtoken";
+constexpr char PARAM_TGCHATID[] = "tgchatid";
 
-  app.manageResource(AlmaGrab::RESOURCE_CURL, curl);
-
-  return 0;
+// End of namespace
 }
+
+#endif /* COMMON_H */
