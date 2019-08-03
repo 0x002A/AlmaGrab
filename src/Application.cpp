@@ -58,7 +58,7 @@ AlmaGrab::Application::parseArguments(int argc, char* argv[])
       continue;
     }
 
-    std::regex rgx("-([A-Za-z0-9]*)=([A-Za-z0-9]*)");
+    std::regex rgx("-([A-Za-z0-9]*)=([A-Za-z0-9:\\-,.]*)");
     std::smatch matches;
     std::string arg(argv[i]);
 

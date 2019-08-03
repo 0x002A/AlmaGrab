@@ -26,23 +26,39 @@
    OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  **********************************************************************************************************************/
 
-#include "Application.h"
-#include "Telegram.h"
-#include "Common.h"
+#ifndef TELEGRAM_H
+#define TELEGRAM_H
 
-#include <curl/curl.h>
+#include "Notifiable.h"
 
-auto
-main(int argc, char* argv[]) -> int
-{
-  AlmaGrab::Application app(argc, argv);
+#include <unordered_map>
 
-  AlmaGrab::Resource curl(curl_easy_init(), [](const AlmaGrab::Resource* pVal) -> void {
-    auto pCURL = (CURL*)*pVal;
-    curl_easy_cleanup(pCURL);
-  });
+//namespace
+namespace AlmaGrab {
 
-  app.manageResource(AlmaGrab::RESOURCE_CURL, curl);
+/**
+ *  Class containing the implementation of the telegram notification target.
+ *
+ *  This class enables calls to the telegram API for sending messages to users using bot accounts.
+ */
+class Telegram: public Notifiable {
+public:
+  using Notifiable::Notifiable;
 
-  return 0;
+  /**
+   * Sends the supplied message to the telegram user.
+   * @param msg the message to be sent to the telegram user.
+   */
+  void notify(std::string msg) const override;
+protected:
+  /**
+   * Creates a GET query string out of the given parameters.
+   * @param values the key-value-pairs to be converted into a query string.
+   */
+  std::string buildQueryString(std::unordered_map<std::string, std::string> values) const;
+};
+
+// End of namespace
 }
+
+#endif /* TELEGRAM_H */

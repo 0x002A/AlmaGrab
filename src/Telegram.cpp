@@ -26,23 +26,51 @@
    OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  **********************************************************************************************************************/
 
-#include "Application.h"
 #include "Telegram.h"
+#include "Application.h"
 #include "Common.h"
 
+#include <algorithm>
 #include <curl/curl.h>
 
-auto
-main(int argc, char* argv[]) -> int
-{
-  AlmaGrab::Application app(argc, argv);
+// CURL requires a write function to be stopped from writing to standard output
+void discarding_write_callback(char*, size_t, size_t, void*) {};
 
-  AlmaGrab::Resource curl(curl_easy_init(), [](const AlmaGrab::Resource* pVal) -> void {
-    auto pCURL = (CURL*)*pVal;
-    curl_easy_cleanup(pCURL);
+void
+AlmaGrab::Telegram::notify(std::string msg) const
+{
+  auto token = m_pApp->requireParam(PARAM_TGTOKEN);
+  auto chatID = m_pApp->requireParam(PARAM_TGCHATID);
+  std::unordered_map<std::string, std::string> params = {
+    {"chat_id", chatID},
+    {"text", msg}
+  };
+
+  auto reqURL = "https://api.telegram.org/bot" + token + "/sendMessage" + buildQueryString(params);
+  auto curl = (CURL*)m_pApp->getResource(RESOURCE_CURL);
+  curl_easy_setopt(curl, CURLOPT_URL, reqURL.c_str());
+  curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1L);
+  curl_easy_setopt(curl, CURLOPT_VERBOSE, 0L);
+  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, discarding_write_callback);
+
+  curl_easy_perform(curl);
+}
+
+std::string
+AlmaGrab::Telegram::buildQueryString(std::unordered_map<std::string, std::string> values) const
+{
+  if (values.empty()){
+    return "";
+  }
+
+  std::string str;
+  std::for_each(std::begin(values), std::end(values), [&](auto const& param){
+    auto strParam = std::get<0>(param) + '=' + std::get<1>(param);
+    str += "&" + strParam;
   });
 
-  app.manageResource(AlmaGrab::RESOURCE_CURL, curl);
+  // Convert the first '&' into '?'
+  str[0] = '?';
 
-  return 0;
+  return str;
 }

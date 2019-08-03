@@ -35,7 +35,7 @@ namespace {
 // Tests wether passing an illegaly formed parameter leads to an exception
 TEST(ApplicationTest, ThrowsException) {
   // Explicit cast required
-  char *args[] = {(char*)"almagrab\0", (char*)"42\0"};
+  char *args[] = {(char*)"almagrab", (char*)"42"};
 
   ASSERT_THROW(AlmaGrab::Application(2, args), std::runtime_error);
 }
@@ -43,7 +43,7 @@ TEST(ApplicationTest, ThrowsException) {
 // Tests wether passing a well formed parameter leads to an exception
 TEST(ApplicationTest, ThrowsNoException) {
   // Explicit cast required
-  char *args[] = {(char*)"almagrab\0", (char*)"-username=0x002A\0"};
+  char *args[] = {(char*)"almagrab", (char*)"-username=0x002A"};
 
   ASSERT_NO_THROW(AlmaGrab::Application(2, args));
 }
@@ -51,7 +51,7 @@ TEST(ApplicationTest, ThrowsNoException) {
 // Tests wether requiring a missing parameter leads to an exception
 TEST(ApplicationTest, ThrowsForMissingRequired) {
   // Explicit cast required
-  char *args[] = {(char*)"almagrab\0", (char*)"-username=0x002A\0"};
+  char *args[] = {(char*)"almagrab", (char*)"-username=0x002A"};
   AlmaGrab::Application app(2, args);
 
   ASSERT_THROW(app.requireParam("password"), std::runtime_error);
@@ -60,7 +60,7 @@ TEST(ApplicationTest, ThrowsForMissingRequired) {
 // Tests wether requiring a given parameter leads to an exception
 TEST(ApplicationTest, ThrowsNotForGivenRequired) {
   // Explicit cast required
-  char *args[] = {(char*)"almagrab\0", (char*)"-username=0x002A\0"};
+  char *args[] = {(char*)"almagrab", (char*)"-username=0x002A"};
   AlmaGrab::Application app(2, args);
 
   ASSERT_NO_THROW(app.requireParam("username"));
@@ -69,7 +69,7 @@ TEST(ApplicationTest, ThrowsNotForGivenRequired) {
 // Tests wether hasParam returns correct results
 TEST(ApplicationTest, ResultOfHasParam) {
   // Explicit cast required
-  char *args[] = {(char*)"almagrab\0", (char*)"-username=0x002A\0"};
+  char *args[] = {(char*)"almagrab", (char*)"-username=0x002A"};
   AlmaGrab::Application app(2, args);
 
   EXPECT_EQ(app.hasParam("username"), true);
@@ -79,7 +79,7 @@ TEST(ApplicationTest, ResultOfHasParam) {
 // Tests wether requireParam returns correct a result
 TEST(ApplicationTest, ResultOfRequireParam) {
   // Explicit cast required
-  char *args[] = {(char*)"almagrab\0", (char*)"-username=0x002A\0"};
+  char *args[] = {(char*)"almagrab", (char*)"-username=0x002A"};
   AlmaGrab::Application app(2, args);
 
   EXPECT_EQ(app.requireParam("username"), "0x002A");
@@ -88,7 +88,7 @@ TEST(ApplicationTest, ResultOfRequireParam) {
 // Tests wether requireParam returns correct a result
 TEST(ApplicationTest, ResultOfGetParam) {
   // Explicit cast required
-  char *args[] = {(char*)"almagrab\0", (char*)"-username=0x002A\0"};
+  char *args[] = {(char*)"almagrab", (char*)"-username=0x002A"};
   AlmaGrab::Application app(2, args);
   std::string str;
 
@@ -100,7 +100,7 @@ TEST(ApplicationTest, ResultOfGetParam) {
 // Tests wether adding a resource using a used key leads to an exception
 TEST(ApplicationTest, ThrowsForUsedResourceIdentifier) {
   // Explicit cast required
-  char *args[] = {(char*)"almagrab\0"};
+  char *args[] = {(char*)"almagrab"};
   AlmaGrab::Application app(1, args);
 
   AlmaGrab::Resource res(new std::string(), [](const AlmaGrab::Resource*) -> void {  });
@@ -112,7 +112,7 @@ TEST(ApplicationTest, ThrowsForUsedResourceIdentifier) {
 // Tests wether adding a resource using an unused key leads to an exception
 TEST(ApplicationTest, ThrowsNotForUnusedResourceIdentifier) {
   // Explicit cast required
-  char *args[] = {(char*)"almagrab\0"};
+  char *args[] = {(char*)"almagrab"};
   AlmaGrab::Application app(1, args);
 
   AlmaGrab::Resource res(new std::string(), [](const AlmaGrab::Resource*) -> void {  });
@@ -128,7 +128,7 @@ TEST(ApplicationTest, DeallocatorCallOrder) {
   // Construct app instance in extra scope
   {
     // Explicit cast required
-    char *args[] = {(char*)"almagrab\0"};
+    char *args[] = {(char*)"almagrab"};
     AlmaGrab::Application app(1, args);
 
     AlmaGrab::Resource res1(&n, [](const AlmaGrab::Resource* pRes) -> void {

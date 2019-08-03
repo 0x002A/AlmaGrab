@@ -44,7 +44,7 @@ $(BIN)/$(TARGET): $(OBJS)
 
 $(BIN)/unittest : $(filter-out $(OBJ)/main.o,$(OBJS)) $(UT_OBJS) $(BIN)/gtest_main.a
 	mkdir -p $(BIN)
-	$(CXX) -isystem $(GTEST_DIR)/include $(CPPFLAGS) -lpthread $^ -o $@
+	$(CXX) $(LDFLAGS) -isystem $(GTEST_DIR)/include $(CPPFLAGS) -lpthread $^ -o $@
 
 $(OBJ)/%.o: $(SRC)/%.cpp
 	mkdir -p $(OBJ)
