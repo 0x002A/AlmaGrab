@@ -33,11 +33,11 @@
  * This tool can be used to automatically parse the campus management system AlmaWeb and notify the user in case of changes.
  * It is designed to be easy extensible by implementing the desired interfaces (AlmaGrab::Notifiable, AlmaGrab::Watchable).
  *
- * \section install_sec Commandline Parameters
+ * \section param_sec Commandline Parameters
  *
  * Parameter     | Description
  * ------------- | -------------
- * tgtoken       | Token of the telegram bot used to send the messages 
+ * tgtoken       | Token of the telegram bot used to send the messages
  * tgchatid      | ChatID of the private messaging thread between the desired user and the telegram bot
  *
  */
