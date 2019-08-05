@@ -26,36 +26,50 @@
    OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  **********************************************************************************************************************/
 
-/*! \mainpage AlmaGrab Documentation
- *
- * \section intro_sec Introduction
- *
- * This tool can be used to automatically parse the campus management system AlmaWeb and notify the user in case of changes.
- * It is designed to be easy extensible by implementing the desired interfaces (AlmaGrab::Notifiable, AlmaGrab::Watchable).
- *
- * \section param_sec Commandline Parameters
- *
- * Parameter     | Description
- * ------------- | -------------
- * tgtoken       | Token of the telegram bot used to send the messages
- * tgchatid      | ChatID of the private messaging thread between the desired user and the telegram bot
- *
- */
+#include "AlmaWeb.h"
 
-#ifndef COMMON_H
-#define COMMON_H
+#include "Common.h"
+#include "Notifiable.h"
+#include "Application.h"
+#include "CURLResponseHelper.h"
 
-namespace AlmaGrab {
+#include <curl/curl.h>
+#include <regex>
+#include <algorithm>
 
-constexpr char RESOURCE_CURL[] = "curl";
-
-constexpr char PARAM_TGTOKEN[] = "tgtoken";
-constexpr char PARAM_TGCHATID[] = "tgchatid";
-
-constexpr char USR_AGENT[] = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0";
-constexpr char AW_VERSION[] = "9.10.004";
-
-// End of namespace
+void
+AlmaGrab::AlmaWeb::checkForChanges(std::vector<Notifiable*> toNotify) const
+{
+  auto newVersion = isNewVersion();
+  if(newVersion) {
+    std::for_each(std::begin(toNotify), std::end(toNotify), [&](auto target){
+      target->notify("Attention: Version of AlmaWeb has changed!");
+    });
+  }
 }
 
-#endif /* COMMON_H */
+bool
+AlmaGrab::AlmaWeb::isNewVersion() const
+{
+  CURLResponseHelper rh;
+  auto curl = (CURL*)m_pApp->getResource(RESOURCE_CURL);
+  curl_easy_setopt(curl, CURLOPT_URL, "https://almaweb.uni-leipzig.de/");
+  curl_easy_setopt(curl, CURLOPT_USERAGENT, USR_AGENT);
+  curl_easy_setopt(curl, CURLOPT_VERBOSE, 0L);
+  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, AlmaGrab::CURLResponseHelper::callback);
+  curl_easy_setopt(curl, CURLOPT_WRITEDATA, &rh);
+
+  curl_easy_perform(curl);
+
+  std::regex rgx("customer:[ 	]*[A-Za-z0-9]*\r\n[ 	]*version:[ 	]*([0-9.]*)");
+  std::cmatch matches;
+  const char* pData = rh.getData();
+
+  if(std::regex_search(pData, pData + rh.getSize(), matches, rgx)) {
+    if(std::strcmp(matches[1].str().c_str(), AW_VERSION) == 0){
+      return false;
+    }
+  }
+
+  return true;
+}

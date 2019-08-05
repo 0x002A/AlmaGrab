@@ -1,4 +1,4 @@
-.PHONY: all tests clean release remake
+.PHONY: all tests clean release remake doc
 
 GTEST_DIR := $(HOME)/development_cpp/gtest/googletest
 
@@ -71,7 +71,11 @@ $(BIN)/gtest_main.a : $(UT)/$(OBJ)/gtest-all.o $(UT)/$(OBJ)/gtest_main.o
 
 remake: clean all
 
+doc:
+	doxygen
+
 clean:
 	rm -rf $(OBJ)
 	rm -rf $(BIN)
 	rm -rf $(UT)/$(OBJ)
+	rm -rf doc

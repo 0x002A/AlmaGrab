@@ -26,36 +26,43 @@
    OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  **********************************************************************************************************************/
 
-/*! \mainpage AlmaGrab Documentation
- *
- * \section intro_sec Introduction
- *
- * This tool can be used to automatically parse the campus management system AlmaWeb and notify the user in case of changes.
- * It is designed to be easy extensible by implementing the desired interfaces (AlmaGrab::Notifiable, AlmaGrab::Watchable).
- *
- * \section param_sec Commandline Parameters
- *
- * Parameter     | Description
- * ------------- | -------------
- * tgtoken       | Token of the telegram bot used to send the messages
- * tgchatid      | ChatID of the private messaging thread between the desired user and the telegram bot
- *
- */
+#ifndef WATCHABLE_H
+#define WATCHABLE_H
 
-#ifndef COMMON_H
-#define COMMON_H
+#include <vector>
 
+//namespace
 namespace AlmaGrab {
 
-constexpr char RESOURCE_CURL[] = "curl";
+// Forward declaration
+class Application;
+class Notifiable;
 
-constexpr char PARAM_TGTOKEN[] = "tgtoken";
-constexpr char PARAM_TGCHATID[] = "tgchatid";
+/**
+ *  Interface class implemented by observation targets.
+ *
+ *  This class act's as an interface for all sources to be observed for changes.
+ */
+class Watchable {
+public:
+  /**
+   * Class constructor which recieves a pointer to the application class instance.
+   * @see AlmaGrab::Application
+   * @param pApp the pointer to the application class instance.
+   */
+  explicit Watchable(const Application* pApp)
+  : m_pApp(pApp) {};
 
-constexpr char USR_AGENT[] = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0";
-constexpr char AW_VERSION[] = "9.10.004";
+  /**
+   * Pure virtual checking method to be implemented by deriving classes.
+   * @param toNotify the vector containing pointers to all notification recipients.
+   */
+  virtual void checkForChanges(std::vector<Notifiable*> toNotify) const = 0;
+protected:
+  const Application* m_pApp; /*!< a pointer to the application class instance */
+};
 
 // End of namespace
 }
 
-#endif /* COMMON_H */
+#endif /* WATCHABLE_H */

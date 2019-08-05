@@ -26,36 +26,37 @@
    OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  **********************************************************************************************************************/
 
-/*! \mainpage AlmaGrab Documentation
- *
- * \section intro_sec Introduction
- *
- * This tool can be used to automatically parse the campus management system AlmaWeb and notify the user in case of changes.
- * It is designed to be easy extensible by implementing the desired interfaces (AlmaGrab::Notifiable, AlmaGrab::Watchable).
- *
- * \section param_sec Commandline Parameters
- *
- * Parameter     | Description
- * ------------- | -------------
- * tgtoken       | Token of the telegram bot used to send the messages
- * tgchatid      | ChatID of the private messaging thread between the desired user and the telegram bot
- *
- */
+#ifndef ALMAWEB_H
+#define ALMAWEB_H
 
-#ifndef COMMON_H
-#define COMMON_H
+#include "Watchable.h"
 
+//namespace
 namespace AlmaGrab {
 
-constexpr char RESOURCE_CURL[] = "curl";
+/**
+ *  Class containing the implementation of the AlmaWeb observation target.
+ *
+ *  This class enables extracting relevant information by parsing the AlmaWeb web application.
+ */
+class AlmaWeb: public Watchable {
+public:
+  using Watchable::Watchable;
 
-constexpr char PARAM_TGTOKEN[] = "tgtoken";
-constexpr char PARAM_TGCHATID[] = "tgchatid";
-
-constexpr char USR_AGENT[] = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0";
-constexpr char AW_VERSION[] = "9.10.004";
+  /**
+   * Checks AlmaWeb for changes and notifies the user if required.
+   * @param toNotify the vector containing pointers to all notification recipients.
+   */
+  void checkForChanges(std::vector<Notifiable*> toNotify) const override;
+protected:
+  /**
+   * Compares the version parsed from AlmaWeb to the one in use by the time of implementation.
+   * @return the boolean value indicating wether the version has changed or not.
+   */
+  bool isNewVersion() const;
+};
 
 // End of namespace
 }
 
-#endif /* COMMON_H */
+#endif /* ALMAWEB_H */

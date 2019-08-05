@@ -27,14 +27,13 @@
  **********************************************************************************************************************/
 
 #include "Telegram.h"
-#include "Application.h"
+
 #include "Common.h"
+#include "Application.h"
+#include "CURLResponseHelper.h"
 
-#include <algorithm>
 #include <curl/curl.h>
-
-// CURL requires a write function to be stopped from writing to standard output
-void discarding_write_callback(char*, size_t, size_t, void*) {};
+#include <algorithm>
 
 void
 AlmaGrab::Telegram::notify(std::string msg) const
@@ -46,12 +45,14 @@ AlmaGrab::Telegram::notify(std::string msg) const
     {"text", msg}
   };
 
+  CURLResponseHelper rh;
   auto reqURL = "https://api.telegram.org/bot" + token + "/sendMessage" + buildQueryString(params);
   auto curl = (CURL*)m_pApp->getResource(RESOURCE_CURL);
   curl_easy_setopt(curl, CURLOPT_URL, reqURL.c_str());
   curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1L);
   curl_easy_setopt(curl, CURLOPT_VERBOSE, 0L);
-  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, discarding_write_callback);
+  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, AlmaGrab::CURLResponseHelper::callback);
+  curl_easy_setopt(curl, CURLOPT_WRITEDATA, &rh);
 
   curl_easy_perform(curl);
 }

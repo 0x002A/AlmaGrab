@@ -26,9 +26,11 @@
    OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  **********************************************************************************************************************/
 
-#include "Application.h"
-#include "Telegram.h"
 #include "Common.h"
+#include "Application.h"
+#include "Resource.h"
+#include "Telegram.h"
+#include "AlmaWeb.h"
 
 #include <curl/curl.h>
 
@@ -43,6 +45,14 @@ main(int argc, char* argv[]) -> int
   });
 
   app.manageResource(AlmaGrab::RESOURCE_CURL, curl);
+
+  // Notification targets
+  auto telegram = AlmaGrab::Telegram(&app);
+
+  std::vector<AlmaGrab::Notifiable*> notificationTargets { &telegram };
+
+  AlmaGrab::AlmaWeb almaweb(&app);
+  almaweb.checkForChanges(notificationTargets);
 
   return 0;
 }

@@ -26,36 +26,33 @@
    OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  **********************************************************************************************************************/
 
-/*! \mainpage AlmaGrab Documentation
- *
- * \section intro_sec Introduction
- *
- * This tool can be used to automatically parse the campus management system AlmaWeb and notify the user in case of changes.
- * It is designed to be easy extensible by implementing the desired interfaces (AlmaGrab::Notifiable, AlmaGrab::Watchable).
- *
- * \section param_sec Commandline Parameters
- *
- * Parameter     | Description
- * ------------- | -------------
- * tgtoken       | Token of the telegram bot used to send the messages
- * tgchatid      | ChatID of the private messaging thread between the desired user and the telegram bot
- *
- */
+#include "CURLResponseHelper.h"
 
-#ifndef COMMON_H
-#define COMMON_H
+#include <new>
+#include <cstring>
 
-namespace AlmaGrab {
+size_t
+AlmaGrab::CURLResponseHelper::internalCallback(void* buffer, size_t sz, size_t n)
+{
+  size_t realsize = sz * n;
 
-constexpr char RESOURCE_CURL[] = "curl";
+  char* pData;
+  if(m_pData == nullptr) {
+    pData = (char*)std::malloc(realsize);
+  } else {
+    pData = (char*)std::realloc(m_pData, m_size + realsize + 1);
+  }
 
-constexpr char PARAM_TGTOKEN[] = "tgtoken";
-constexpr char PARAM_TGCHATID[] = "tgchatid";
+  // Check if allocation succeeded
+  if(pData == nullptr) {
+    throw std::bad_alloc();
+    return 0;
+  }
 
-constexpr char USR_AGENT[] = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0";
-constexpr char AW_VERSION[] = "9.10.004";
+  m_pData = pData;
+  std::memcpy(&(m_pData[m_size]), buffer, realsize);
+  m_size += realsize;
+  m_pData[m_size] = 0;
 
-// End of namespace
+  return realsize;
 }
-
-#endif /* COMMON_H */
